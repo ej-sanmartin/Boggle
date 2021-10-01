@@ -3,6 +3,15 @@ using System.Timers;
 using System.Collections.Generic;
 
 public class Boggle {
+  class Cell {
+    public int Row { get; }
+    public int Col { get; }
+    public Cell(int row, int col){
+      Row = row;
+      Col = col;
+    }
+  }
+
   private readonly int _rows = 5;
   private readonly int _cols = 5;
   private readonly int _maxLengthWord;
@@ -13,7 +22,7 @@ public class Boggle {
   private int _score;
 
   // all 25, random letter dice
-  private string[][] dice = new string[][] {
+  private string[][] _dice = new string[][] {
     new string[]{"A", "A", "A", "F", "R", "S"},
     new string[]{"A", "A", "E", "E", "E", "E"},
     new string[]{"A", "A", "F", "I", "R", "S"},
@@ -46,7 +55,7 @@ public class Boggle {
     truncated down to 8 for proper scoring
     KVP: K = word length, V = score
   */
-  private Dictionary<int, int> scoreBank = new Dictionary<int, int>() {
+  private Dictionary<int, int> _scoreBank = new Dictionary<int, int>() {
     [3] = 1,
     [4] = 1,
     [5] = 2,
@@ -56,7 +65,7 @@ public class Boggle {
   };
 
   // all adjacent dice in 8 directions
-  private int[][] directions = new int[][] {
+  private int[][] _directions = new int[][] {
     new int[]{-1, 0},
     new int[]{0, -1},
     new int[]{-1, -1},
@@ -103,7 +112,9 @@ public class Boggle {
       for (int col = 0; col < _cols; col++) {
         if (_board[row][col] == word[0].ToString()) {
           if (ValidateWord(word, 0, row, col)) {
+            int wordLength = (word.Length > 8 ? 8 : word.Length);
             _foundWords.Add(word);
+            _score += _scoreBank[wordLength];
             return true;
           }
         }
@@ -157,7 +168,7 @@ public class Boggle {
         }
         usedDice.Add(randomDice);
         int randomFace = _r.Next(0, 6);
-        _board[row][col] = dice[randomDice][randomFace];
+        _board[row][col] = _dice[randomDice][randomFace];
       }
     }
   }
@@ -176,10 +187,43 @@ public class Boggle {
       return true;
     }
 
-    if(word[index] != _board[row][col]){
+    if(word[index].ToString() != _board[row][col]){
       return false;
     }
 
+    string currentLetter = _board[row][col];
+    _board[row][col] = "_";
+
+    HashSet<bool> isWordCompletelyFound = new HashSet<bool>();
+    foreach(Cell adjacent in GetAdjacentCells(row, col)){
+      int adjacentRow = adjacent.Row;
+      int adjacentCol = adjacent.Col;
+      isWordCompletelyFound.Add(ValidateWord(word, index + 1, adjacentRow, adjacentCol));
+    }
+
+    _board[row][col] = currentLetter;
+    return isWordCompletelyFound.Contains(true);
+  }
+
+  private List<Cell> GetAdjacentCells(int row, int col){
+    List<Cell> adjacentCells = new List<Cell>();
+
+    foreach (int[] direction in _directions) {
+      int adjacentRow = row + direction[0];
+      int adjacentCol = col + direction[1];
+      if (IsInBounds(adjacentRow, adjacentRow)) {
+        adjacentCells.Add(new Cell(adjacentRow, adjacentCol));
+      }
+    }
+
+    return adjacentCells;
+  }
+
+  private bool IsInBounds(int row, int col){
+    if (row < 0 || col < 0 || row >= _board.Length || col >= _board[row].Length) {
+      return false;
+    }
+    return true;
   }
 
   private static void FinishGameEvent(object source, EventArgs e) {
