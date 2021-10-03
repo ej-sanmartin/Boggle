@@ -1,6 +1,14 @@
 using System;
+using System.Linq;
+using System.Text;
 using System.Timers;
 using System.Collections.Generic;
+
+/*
+  TODO: implement this when not in Replit Environment
+  https://stackoverflow.com/questions/38416265/c-sharp-checking-if-a-word-is-in-an-english-dictionary
+  Use NetSpell to make sure the word inputs are actual words
+*/
 
 public class Boggle {
   class Cell {
@@ -20,6 +28,7 @@ public class Boggle {
   private Timer _timer;
   private Random _r;
   private int _score;
+  private bool _gameComplete;
 
   // all 25, random letter dice
   private string[][] _dice = new string[][] {
@@ -85,10 +94,11 @@ public class Boggle {
     SetupTimer(gameTime);
   }
 
-  public void StartNewGame(){
-    _foundWords.Clear();
-    _score = 0;
-    GenerateRandomBoard();
+  public void StartGame(){
+    ResetGame();
+    PrintBoard();
+    Console.WriteLine("\n\n");
+    StartGameTimer();
   }
 
   public int GetFoundWordsCount() {
@@ -100,11 +110,18 @@ public class Boggle {
   }
 
   public bool FindWord(string word) {
+    if(word == null || word.Length < 3){
+      Console.WriteLine("Too Short!");
+      return false;
+    }
+
     if (_foundWords.Contains(word)) {
+      Console.WriteLine("Already Found!");
       return true;
     }
 
     if (word.Length > _maxLengthWord) {
+      Console.WriteLine("Too Long!");
       return false;
     }
 
@@ -144,9 +161,14 @@ public class Boggle {
   }
 
   public void StartGameTimer() {
-    Console.WriteLine("START!");
+    Console.WriteLine("START!\n");
+    _gameComplete = false;
     _timer.Start();
-    Console.ReadKey();
+    while(!_gameComplete){
+      string input = Console.ReadLine();
+      string word = CleanWord(input);
+      Console.WriteLine(FindWord(word) == true ? "GREAT!" : "SO CLOSE!");
+    }
   }
 
   private void GenerateRandomBoard() {
@@ -173,6 +195,12 @@ public class Boggle {
     }
   }
 
+  private string CleanWord(string word){
+    string input = word;
+    string output = string.Concat(input.Where(char.IsLetter));
+    return output.ToUpper();
+  }
+
   private void SetupTimer(int seconds) {
     int gameLength = seconds * 1000;
     _timer = new Timer();
@@ -183,6 +211,10 @@ public class Boggle {
   }
 
   private bool ValidateWord (string word, int index, int row, int col) {
+    if(!IsInBounds(row, col)){
+      return false;
+    }
+
     if (index >= word.Length) {
       return true;
     }
@@ -226,8 +258,21 @@ public class Boggle {
     return true;
   }
 
-  private static void FinishGameEvent(object source, EventArgs e) {
+  private void ResetGame(){
+    _foundWords.Clear();
+    _score = 0;
+    GenerateRandomBoard();
+  }
+
+  private void FinishGameEvent(object source, EventArgs e) {
     Console.Beep(261, 2000); // middle C for 2 seconds
+    _gameComplete = true;
+    Console.WriteLine("\n");
+    Console.WriteLine("WORDS FOUND:\n");
+    PrintAllFoundWords();
+    Console.WriteLine("\n");
+    Console.WriteLine("FINAL SCORE:\n");
+    Console.WriteLine(GetScore() + "\n");
     Console.WriteLine("FINISH!");
   }
 }
