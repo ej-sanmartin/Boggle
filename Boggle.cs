@@ -1,4 +1,4 @@
-using System;
+ using System;
 using System.Linq;
 using System.Text;
 using System.Timers;
@@ -110,6 +110,11 @@ public class Boggle {
   }
 
   public bool FindWord(string word) {
+    if(_gameComplete){
+      Console.WriteLine("GAME OVER");
+      return false;
+    }
+
     if(word == null || word.Length < 3){
       Console.WriteLine("Too Short!");
       return false;
@@ -150,6 +155,14 @@ public class Boggle {
     }
   }
 
+  public void PrintScoreBank() {
+    Console.WriteLine("\nScore Card");
+    Console.WriteLine("================");
+    foreach (KeyValuePair<int, int> scoreEntry in _scoreBank) {
+      Console.WriteLine($"{scoreEntry.Key} Letter Words: {scoreEntry.Value} Points");
+    }
+  }
+
   public void PrintAllFoundWords() {
     foreach(string word in _foundWords){
       Console.WriteLine($"{word}");
@@ -164,11 +177,19 @@ public class Boggle {
     Console.WriteLine("START!\n");
     _gameComplete = false;
     _timer.Start();
+    int inputMovingBoardCount = 0;
     while(!_gameComplete){
+      if(inputMovingBoardCount >= 5){
+        PrintBoard();
+        Console.WriteLine("\n\n");
+        inputMovingBoardCount = 0;
+      }
       string input = Console.ReadLine();
       string word = CleanWord(input);
-      Console.WriteLine(FindWord(word) == true ? "GREAT!" : "SO CLOSE!");
+      Console.WriteLine(FindWord(word) == true ? "GREAT!\n" : "");
+      inputMovingBoardCount++;
     }
+    Console.ReadKey();
   }
 
   private void GenerateRandomBoard() {
@@ -258,6 +279,19 @@ public class Boggle {
     return true;
   }
 
+  private void PrintEndGameMessage() {
+    PrintScoreBank();
+    Console.WriteLine("\n");
+    Console.WriteLine("WORDS FOUND:");
+    Console.WriteLine("================");
+    PrintAllFoundWords();
+    Console.WriteLine("\n");
+    Console.WriteLine("FINAL SCORE:");
+    Console.WriteLine("================");
+    Console.WriteLine(GetScore() + "\n");
+    Console.WriteLine("FINISH!");
+  }
+
   private void ResetGame(){
     _foundWords.Clear();
     _score = 0;
@@ -267,12 +301,6 @@ public class Boggle {
   private void FinishGameEvent(object source, EventArgs e) {
     Console.Beep(261, 2000); // middle C for 2 seconds
     _gameComplete = true;
-    Console.WriteLine("\n");
-    Console.WriteLine("WORDS FOUND:\n");
-    PrintAllFoundWords();
-    Console.WriteLine("\n");
-    Console.WriteLine("FINAL SCORE:\n");
-    Console.WriteLine(GetScore() + "\n");
-    Console.WriteLine("FINISH!");
+    PrintEndGameMessage();
   }
 }
