@@ -173,7 +173,7 @@ public class Boggle {
     return _foundWords.Count;
   }
 
-  public void StartGameTimer() {
+  private void StartGameTimer() {
     Console.WriteLine("START!\n");
     _gameComplete = false;
     _timer.Start();
